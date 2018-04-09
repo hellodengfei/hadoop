@@ -214,7 +214,7 @@
   </property>
   <property>
     <name>ozone.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <tag>OZONE, REQUIRED</tag>
     <description>
       Status of the Ozone Object Storage service is enabled.
