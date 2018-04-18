@@ -600,8 +600,6 @@ function hadoop_bootstrap
   HDDS_LIB_JARS_DIR=${HDDS_LIB_JARS_DIR:-"share/hadoop/hdds/lib"}
   OZONE_DIR=${OZONE_DIR:-"share/hadoop/ozone"}
   OZONE_LIB_JARS_DIR=${OZONE_LIB_JARS_DIR:-"share/hadoop/ozone/lib"}
-  CBLOCK_DIR=${CBLOCK_DIR:-"share/hadoop/cblock"}
-  CBLOCK_LIB_JARS_DIR=${CBLOCK_LIB_JARS_DIR:-"share/hadoop/cblock/lib"}
 
   HADOOP_TOOLS_HOME=${HADOOP_TOOLS_HOME:-${HADOOP_HOME}}
   HADOOP_TOOLS_DIR=${HADOOP_TOOLS_DIR:-"share/hadoop/tools"}
@@ -1732,11 +1730,16 @@ function hadoop_status_daemon
   shift
 
   local pid
+  local pspid
 
   if [[ -f "${pidfile}" ]]; then
     pid=$(cat "${pidfile}")
-    if ps -p "${pid}" > /dev/null 2>&1; then
-      return 0
+    if pspid=$(ps -o args= -p"${pid}" 2>/dev/null); then
+      # this is to check that the running process we found is actually the same
+      # daemon that we're interested in
+      if [[ ${pspid} =~ -Dproc_${daemonname} ]]; then
+        return 0
+      fi
     fi
     return 1
   fi

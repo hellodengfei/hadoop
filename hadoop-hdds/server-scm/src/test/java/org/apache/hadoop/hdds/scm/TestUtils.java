@@ -27,7 +27,7 @@ import java.util.UUID;
 /**
  * Stateless helper functions to handler scm/datanode connection.
  */
-public class TestUtils {
+public final class TestUtils {
 
   private TestUtils() {
   }
@@ -87,8 +87,6 @@ public class TestUtils {
     builder.setUuid(uuid)
         .setHostName("localhost")
         .setIpAddress(ipAddress)
-        .setInfoPort(0)
-        .setInfoSecurePort(0)
         .setContainerPort(0)
         .setRatisPort(0)
         .setOzoneRestPort(0);

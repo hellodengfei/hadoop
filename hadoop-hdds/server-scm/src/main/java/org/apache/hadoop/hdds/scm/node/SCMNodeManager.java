@@ -745,13 +745,15 @@ public class SCMNodeManager
   @Override
   public SCMCommand register(DatanodeDetailsProto datanodeDetailsProto) {
 
+    String hostname = null;
+    String ip = null;
     DatanodeDetails datanodeDetails = DatanodeDetails.getFromProtoBuf(
         datanodeDetailsProto);
     InetAddress dnAddress = Server.getRemoteIp();
     if (dnAddress != null) {
       // Mostly called inside an RPC, update ip and peer hostname
-      String hostname = dnAddress.getHostName();
-      String ip = dnAddress.getHostAddress();
+      hostname = dnAddress.getHostName();
+      ip = dnAddress.getHostAddress();
       datanodeDetails.setHostName(hostname);
       datanodeDetails.setIpAddress(ip);
     }
@@ -788,11 +790,14 @@ public class SCMNodeManager
     }
     LOG.info("Data node with ID: {} Registered.",
         datanodeDetails.getUuid());
-    return RegisteredCommand.newBuilder()
-        .setErrorCode(ErrorCode.success)
-        .setDatanodeUUID(datanodeDetails.getUuidString())
-        .setClusterID(this.clusterID)
-        .build();
+    RegisteredCommand.Builder builder =
+        RegisteredCommand.newBuilder().setErrorCode(ErrorCode.success)
+            .setDatanodeUUID(datanodeDetails.getUuidString())
+            .setClusterID(this.clusterID);
+    if (hostname != null && ip != null) {
+      builder.setHostname(hostname).setIpAddress(ip);
+    }
+    return builder.build();
   }
 
   /**
@@ -829,9 +834,10 @@ public class SCMNodeManager
       DatanodeDetailsProto datanodeDetailsProto, SCMNodeReport nodeReport,
       ReportState containerReportState) {
 
+    Preconditions.checkNotNull(datanodeDetailsProto, "Heartbeat is missing " +
+        "DatanodeDetails.");
     DatanodeDetails datanodeDetails = DatanodeDetails
         .getFromProtoBuf(datanodeDetailsProto);
-
     // Checking for NULL to make sure that we don't get
     // an exception from ConcurrentList.
     // This could be a problem in tests, if this function is invoked via
@@ -846,7 +852,6 @@ public class SCMNodeManager
     } else {
       LOG.error("Datanode ID in heartbeat is null");
     }
-
     return commandQueue.getCommand(datanodeDetails.getUuid());
   }
 
@@ -875,7 +880,7 @@ public class SCMNodeManager
    */
   @Override
   public SCMNodeMetric getNodeStat(DatanodeDetails datanodeDetails) {
-    return new SCMNodeMetric(nodeStats.get(datanodeDetails));
+    return new SCMNodeMetric(nodeStats.get(datanodeDetails.getUuid()));
   }
 
   @Override

@@ -17,16 +17,20 @@
 package org.apache.hadoop.ozone.container.common.states.endpoint;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdds.scm.ScmConfigKeys;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
-import org.apache.hadoop.hdds.protocol.proto.HddsProtos.DatanodeDetailsProto;
 import org.apache.hadoop.ozone.container.common.statemachine
     .EndpointStateMachine;
+import org.apache.hadoop.hdds.protocol.proto
+    .StorageContainerDatanodeProtocolProtos.SCMRegisteredCmdResponseProto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -40,7 +44,7 @@ public final class RegisterEndpointTask implements
   private final EndpointStateMachine rpcEndPoint;
   private final Configuration conf;
   private Future<EndpointStateMachine.EndPointStates> result;
-  private DatanodeDetailsProto datanodeDetailsProto;
+  private DatanodeDetails datanodeDetails;
 
   /**
    * Creates a register endpoint task.
@@ -57,22 +61,22 @@ public final class RegisterEndpointTask implements
   }
 
   /**
-   * Get the DatanodeDetailsProto Proto.
+   * Get the DatanodeDetails.
    *
    * @return DatanodeDetailsProto
    */
-  public DatanodeDetailsProto getDatanodeDetailsProto() {
-    return datanodeDetailsProto;
+  public DatanodeDetails getDatanodeDetails() {
+    return datanodeDetails;
   }
 
   /**
    * Set the contiainerNodeID Proto.
    *
-   * @param datanodeDetailsProto - Container Node ID.
+   * @param datanodeDetails - Container Node ID.
    */
-  public void setDatanodeDetailsProto(
-      DatanodeDetailsProto datanodeDetailsProto) {
-    this.datanodeDetailsProto = datanodeDetailsProto;
+  public void setDatanodeDetails(
+      DatanodeDetails datanodeDetails) {
+    this.datanodeDetails = datanodeDetails;
   }
 
   /**
@@ -84,8 +88,8 @@ public final class RegisterEndpointTask implements
   @Override
   public EndpointStateMachine.EndPointStates call() throws Exception {
 
-    if (getDatanodeDetailsProto() == null) {
-      LOG.error("Container ID proto cannot be null in RegisterEndpoint task, " +
+    if (getDatanodeDetails() == null) {
+      LOG.error("DatanodeDetails cannot be null in RegisterEndpoint task, " +
           "shutting down the endpoint.");
       return rpcEndPoint.setState(EndpointStateMachine.EndPointStates.SHUTDOWN);
     }
@@ -94,8 +98,18 @@ public final class RegisterEndpointTask implements
     try {
 
       // TODO : Add responses to the command Queue.
-      rpcEndPoint.getEndPoint().register(datanodeDetailsProto,
-          conf.getStrings(ScmConfigKeys.OZONE_SCM_NAMES));
+      SCMRegisteredCmdResponseProto response = rpcEndPoint.getEndPoint()
+          .register(datanodeDetails.getProtoBufMessage(),
+              conf.getStrings(ScmConfigKeys.OZONE_SCM_NAMES));
+      Preconditions.checkState(UUID.fromString(response.getDatanodeUUID())
+              .equals(datanodeDetails.getUuid()),
+          "Unexpected datanode ID in the response.");
+      Preconditions.checkState(!StringUtils.isBlank(response.getClusterID()),
+          "Invalid cluster ID in the response.");
+      if (response.hasHostname() && response.hasIpAddress()) {
+        datanodeDetails.setHostName(response.getHostname());
+        datanodeDetails.setIpAddress(response.getIpAddress());
+      }
       EndpointStateMachine.EndPointStates nextState =
           rpcEndPoint.getState().getNextState();
       rpcEndPoint.setState(nextState);
@@ -187,7 +201,7 @@ public final class RegisterEndpointTask implements
 
       RegisterEndpointTask task = new RegisterEndpointTask(this
           .endPointStateMachine, this.conf);
-      task.setDatanodeDetailsProto(datanodeDetails.getProtoBufMessage());
+      task.setDatanodeDetails(datanodeDetails);
       return task;
     }
   }

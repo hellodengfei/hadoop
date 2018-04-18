@@ -24,7 +24,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <relativePath>../hadoop-project-dist</relativePath>
   </parent>
   <artifactId>hadoop-ozone</artifactId>
-  <version>3.2.0-SNAPSHOT</version>
+  <version>0.2.1-SNAPSHOT</version>
   <description>Apache Hadoop Ozone parent project</description>
   <name>Apache Hadoop Ozone</name>
   <packaging>pom</packaging>
@@ -122,6 +122,8 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
         <artifactId>apache-rat-plugin</artifactId>
         <configuration>
           <excludes>
+            <exclude>**/target/**</exclude>
+            <exclude>acceptance-test/hadoop-ozone-acceptance-test.iml</exclude>
             <exclude>.gitattributes</exclude>
             <exclude>.idea/**</exclude>
             <exclude>dev-support/checkstyle*</exclude>

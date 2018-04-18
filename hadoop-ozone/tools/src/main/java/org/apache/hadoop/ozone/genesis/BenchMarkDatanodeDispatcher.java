@@ -1,3 +1,20 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.apache.hadoop.ozone.genesis;
 
 import com.google.protobuf.ByteString;
@@ -7,7 +24,6 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.server.datanode.StorageLocation;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
-import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.ozone.container.common.impl.ChunkManagerImpl;
 import org.apache.hadoop.ozone.container.common.impl.ContainerManagerImpl;
 import org.apache.hadoop.ozone.container.common.impl.Dispatcher;
@@ -106,7 +122,8 @@ public class BenchMarkDatanodeDispatcher {
       for (int y = 0; y < 100; y++) {
         String containerName = "container-" + y;
         dispatcher.dispatch(getWriteChunkCommand(containerName, chunkName));
-        dispatcher.dispatch(getPutKeyCommand(containerName, chunkName, keyName));
+        dispatcher
+            .dispatch(getPutKeyCommand(containerName, chunkName, keyName));
       }
     }
   }
@@ -119,8 +136,8 @@ public class BenchMarkDatanodeDispatcher {
 
   private ContainerCommandRequestProto getCreateContainerCommand(
       String containerName) {
-    CreateContainerRequestProto.Builder createRequest = CreateContainerRequestProto
-            .newBuilder();
+    CreateContainerRequestProto.Builder createRequest =
+        CreateContainerRequestProto.newBuilder();
     createRequest.setPipeline(
         new Pipeline(containerName, pipelineChannel).getProtobufMessage());
     createRequest.setContainerData(
@@ -174,12 +191,12 @@ public class BenchMarkDatanodeDispatcher {
 
   private ContainerProtos.ChunkInfo getChunkInfo(
       String containerName, String key) {
-    ContainerProtos.ChunkInfo.Builder builder = ContainerProtos.ChunkInfo
-        .newBuilder()
-        .setChunkName(
-            DigestUtils.md5Hex(key) + "_stream_" + containerName + "_chunk_" + key)
-        .setOffset(0)
-        .setLen(data.size());
+    ContainerProtos.ChunkInfo.Builder builder =
+        ContainerProtos.ChunkInfo.newBuilder()
+            .setChunkName(
+                DigestUtils.md5Hex(key) + "_stream_" + containerName + "_chunk_"
+                    + key)
+            .setOffset(0).setLen(data.size());
     return builder.build();
   }
 
@@ -250,7 +267,7 @@ public class BenchMarkDatanodeDispatcher {
     String containerName = "container-" + random.nextInt(containerCount.get());
     String chunkKey = "chunk-" + random.nextInt(chunkCount.get());
     bmdd.dispatcher.dispatch(getPutKeyCommand(
-        containerName, chunkKey,"key-" + keyCount.getAndIncrement()));
+        containerName, chunkKey, "key-" + keyCount.getAndIncrement()));
   }
 
   @Benchmark

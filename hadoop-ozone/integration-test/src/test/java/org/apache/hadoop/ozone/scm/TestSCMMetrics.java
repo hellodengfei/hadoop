@@ -28,10 +28,9 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.hadoop.hdds.conf.OzoneConfiguration;
 import org.apache.hadoop.hdds.scm.StorageContainerManager;
 import org.apache.hadoop.hdds.scm.TestUtils;
-import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.apache.hadoop.hdds.protocol.DatanodeDetails;
 import org.apache.hadoop.metrics2.MetricsRecordBuilder;
-import org.apache.hadoop.ozone.MiniOzoneClassicCluster;
+import org.apache.hadoop.ozone.MiniOzoneCluster;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.apache.hadoop.ozone.container.common.helpers.ContainerReport;
 import org.apache.hadoop.hdds.protocol.proto.StorageContainerDatanodeProtocolProtos;
@@ -54,7 +53,7 @@ public class TestSCMMetrics {
   @Rule
   public Timeout testTimeout = new Timeout(90000);
 
-  private static MiniOzoneClassicCluster cluster = null;
+  private static MiniOzoneCluster cluster = null;
 
   @Test
   public void testContainerMetrics() throws Exception {
@@ -70,9 +69,9 @@ public class TestSCMMetrics {
     OzoneConfiguration conf = new OzoneConfiguration();
 
     try {
-      cluster = new MiniOzoneClassicCluster.Builder(conf)
-          .setHandlerType(OzoneConsts.OZONE_HANDLER_DISTRIBUTED)
-          .numDataNodes(nodeCount).build();
+      cluster = MiniOzoneCluster.newBuilder(conf)
+          .setNumDatanodes(nodeCount).build();
+      cluster.waitForClusterToBeReady();
 
       ContainerStat stat = new ContainerStat(size, used, keyCount, readBytes,
           writeBytes, readCount, writeCount);
@@ -164,17 +163,16 @@ public class TestSCMMetrics {
     OzoneConfiguration conf = new OzoneConfiguration();
 
     try {
-      cluster = new MiniOzoneClassicCluster.Builder(conf)
-          .setHandlerType(OzoneConsts.OZONE_HANDLER_DISTRIBUTED)
-          .numDataNodes(nodeCount).build();
+      cluster = MiniOzoneCluster.newBuilder(conf)
+          .setNumDatanodes(nodeCount).build();
+      cluster.waitForClusterToBeReady();
 
       ContainerStat stat = new ContainerStat(size, used, keyCount, readBytes,
           writeBytes, readCount, writeCount);
       StorageContainerManager scmManager = cluster.getStorageContainerManager();
 
-      DataNode dataNode = cluster.getDataNodes().get(0);
-      String datanodeUuid = MiniOzoneClassicCluster.getDatanodeDetails(dataNode)
-          .getUuidString();
+      String datanodeUuid = cluster.getHddsDatanodes().get(0)
+          .getDatanodeDetails().getUuidString();
       ContainerReportsRequestProto request = createContainerReport(numReport,
           stat, datanodeUuid);
       scmManager.sendContainerReport(request);
@@ -246,8 +244,6 @@ public class TestSCMMetrics {
           .setUuid(datanodeUuid)
           .setIpAddress("127.0.0.1")
           .setHostName("localhost")
-          .setInfoPort(0)
-          .setInfoSecurePort(0)
           .setContainerPort(0)
           .setRatisPort(0)
           .setOzoneRestPort(0)

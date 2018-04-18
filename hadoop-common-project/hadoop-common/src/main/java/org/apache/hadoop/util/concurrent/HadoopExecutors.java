@@ -20,8 +20,6 @@
 
 package org.apache.hadoop.util.concurrent;
 
-import org.slf4j.Logger;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,7 +27,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
+import org.slf4j.Logger;
 
 /** Factory methods for ExecutorService, ScheduledExecutorService instances.
  * These executor service instances provide additional functionality (e.g
@@ -40,14 +38,6 @@ public final class HadoopExecutors {
     return new HadoopThreadPoolExecutor(0, Integer.MAX_VALUE,
         60L, TimeUnit.SECONDS,
         new SynchronousQueue<Runnable>(),
-        threadFactory);
-  }
-
-  public static ExecutorService newCachedThreadPool(ThreadFactory
-      threadFactory, int maxThreads) {
-    return new HadoopThreadPoolExecutor(0, maxThreads,
-        60L, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<>(),
         threadFactory);
   }
 
@@ -103,10 +93,11 @@ public final class HadoopExecutors {
 
   /**
    * Helper routine to shutdown a executorService.
+   *
    * @param executorService - executorService
-   * @param logger - Logger
-   * @param timeout - Timeout
-   * @param unit - TimeUnits, generally seconds.
+   * @param logger          - Logger
+   * @param timeout         - Timeout
+   * @param unit            - TimeUnits, generally seconds.
    */
   public static void shutdown(ExecutorService executorService, Logger logger,
       long timeout, TimeUnit unit) {
